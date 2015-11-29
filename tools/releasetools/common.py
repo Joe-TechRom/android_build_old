@@ -390,9 +390,7 @@ def BuildBootableImage(sourcedir, fs_config_file, info_dict=None):
     img_keyblock = tempfile.NamedTemporaryFile()
     cmd = [info_dict["vboot_signer_cmd"], info_dict["futility"],
            img_unsigned.name, info_dict["vboot_key"] + ".vbpubk",
-           info_dict["vboot_key"] + ".vbprivk",
-           info_dict["vboot_subkey"] + ".vbprivk",
-           img_keyblock.name,
+           info_dict["vboot_key"] + ".vbprivk", img_keyblock.name,
            img.name]
     p = Run(cmd, stdout=subprocess.PIPE)
     p.communicate()
@@ -1201,8 +1199,7 @@ class BlockDifference(object):
   def WriteScript(self, script, output_zip, progress=None):
     if not self.src:
       # write the output unconditionally
-      script.Print(" ")
-      script.Print("Flashing System..")
+      script.Print("Patching %s image unconditionally..." % (self.partition,))
     else:
       script.Print("Patching %s image after verification." % (self.partition,))
 
@@ -1249,7 +1246,7 @@ class BlockDifference(object):
 
   def _WritePostInstallVerifyScript(self, script):
     partition = self.partition
-    #script.Print('Verifying the updated %s image...' % (partition,))
+    script.Print('Verifying the updated %s image...' % (partition,))
     # Unlike pre-install verification, clobbered_blocks should not be ignored.
     ranges = self.tgt.care_map
     ranges_str = ranges.to_string_raw()
@@ -1264,16 +1261,14 @@ class BlockDifference(object):
       script.AppendExtra('if range_sha1("%s", "%s") == "%s" then' % (
                          self.device, ranges_str,
                          self._HashZeroBlocks(self.tgt.extended.size())))
-      script.Print(" ")
-      script.Print("Verified System..")
+      script.Print('Verified the updated %s image.' % (partition,))
       script.AppendExtra(
           'else\n'
           '  abort("%s partition has unexpected non-zero contents after OTA '
           'update");\n'
           'endif;' % (partition,))
     else:
-      script.Print(" ")
-      script.Print("Verified System..")
+      script.Print('Verified the updated %s image.' % (partition,))
 
     script.AppendExtra(
         'else\n'
